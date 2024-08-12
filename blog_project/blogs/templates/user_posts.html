@@ -3,7 +3,7 @@
     {% for post in posts.items %}
         <div class="card m-2">
             <div class="card-header">
-                <a class="btn" href="{{ url_for('user_posts', username=post.author) }}"><b class="m-2 text-primary">{{post.author | title}}</b></a>
+                <b class="m-2 text-primary">{{post.author | title}}</b>
                 <small class="text-muted">{{post.date_posted.strftime('%Y-%m-%d')}}</small>
                 
             </div>
@@ -22,9 +22,9 @@
         {% for page_num in posts.iter_pages() %}
             {% if page_num %}
                 {% if posts.page == page_num %}
-                    <a class="btn btn-info m-1" style="width: 5%;" href="{{ url_for('home', page=page_num)}}">{{page_num}}</a>
+                    <a class="btn btn-info m-1" style="width: 5%;" href="{{ url_for('user_posts', username=posts.items[0].author, page=page_num)}}">{{page_num}}</a>
                 {% else %}
-                    <a class="btn btn-outline-info m-1" style="width: 5%;" href="{{ url_for('home', page=page_num)}}">{{page_num}}</a>
+                    <a class="btn btn-outline-info m-1" style="width: 5%;" href="{{ url_for('user_posts', username=posts.items[0].author, page=page_num)}}">{{page_num}}</a>
                 {% endif %}
             {% else %}
                 ...

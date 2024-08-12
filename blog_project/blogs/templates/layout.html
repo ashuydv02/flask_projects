@@ -9,15 +9,25 @@
   <body>
     <div class="container">
         <div class="row">
-            <nav class="navbar bg-body-tertiary mt-2 mb-3">
+            <nav class="navbar mb-3" style="background-color: aliceblue;">
                 <div class="container-fluid">
                   <a class="navbar-brand" href="{{ url_for('home') }}">Blogs</a>
-                  <a href="{{ url_for('login') }}" class="btn">Login</a>
-
-                  <form class="d-flex" role="search">
-                    <input class="form-control me-2" type="search" placeholder="Search" aria-label="Search">
+                  <form method="get" action="{{url_for('post')}}" class="d-flex" role="search">
+                    <input class="form-control me-2" type="search" name="title" placeholder="Search" aria-label="Search" required>
                     <button class="btn btn-outline-success" type="submit">Search</button>
                   </form>
+                  {% if current_user.is_authenticated %}
+                  <div>
+                    <a href="{{ url_for('account') }}" class="btn">Profile</a>
+                    <a href="{{ url_for('create_post') }}" class="btn">Create Post</a>
+                    <a href="{{ url_for('logout') }}" class="btn">Logout</a>
+                  </div>
+                  {% else %}
+                  <div>
+                    <a href="{{ url_for('login') }}" class="btn">Login</a>
+                    <a href="{{ url_for('register') }}" class="btn">Register</a>
+                  </div>
+                  {% endif %}
                 </div>
             </nav>
         </div>

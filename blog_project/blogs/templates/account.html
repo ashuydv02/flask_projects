@@ -1,0 +1,36 @@
+{% extends 'layout.html' %}
+{% block content %}
+    <div class="content-section m-2 p-2">
+        <h1>Your Profile</h1>
+        <div class="row m-5  border p-3">
+            <div class="col-3">
+                <img class="rounded-circle account-img" src="{{ image_file }}" alt="profile" style="height: 150px; width: 150px;">
+            </div>
+            <div class="col mt-5">
+                <h2 class="account-heading">{{current_user.username | title}}</h2>
+                <p class="text-secondary">{{current_user.email}}</p>
+            </div>
+        </div>
+        <h2 class="mt-5 mb-4">Your Posts</h2>
+        {% for post in current_user.posts %}
+            <div class="card m-2">
+                <div class="card-header">
+                    <div class="row">
+                        <div class="col">
+                            <b class="m-2 text-primary">{{current_user.username | title}}</b>
+                            <small class="text-muted">{{post.date_posted.strftime('%Y-%m-%d')}}</small>
+                        </div>
+                        <div class="col-3">
+                            <a class="btn btn-primary" href="{{url_for('update_post', id=post.id)}}">Update</a>
+                            <a class="btn btn-danger" href="{{url_for('delete_post', id=post.id)}}">Delete</a>
+                        </div>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <h5 class="card-title">{{post.title}}</h5>
+                    <p class="card-text">{{post.content}}</p>
+                </div>
+            </div>
+        {% endfor %}
+    </div>
+{% endblock %}
