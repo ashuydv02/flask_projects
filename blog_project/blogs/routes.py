@@ -4,7 +4,7 @@ from blogs.forms import RegistrationForm, LoginForm, PostForm
 from blogs.models import User, Post
 from bcrypt import *
 from flask_login import login_user, logout_user, current_user, login_required
-from sqlalchemy import desc
+from sqlalchemy import desc, or_
 
 
 @app.route("/")
@@ -77,13 +77,18 @@ def create_post():
     return render_template('create_post.html', form=form, legend='Create Post')
 
 
-@app.route('/post')
-def post():
-    title = request.args.get('title')
-    posts = Post.query.filter(
-        (Post.title.ilike(f'%{title}%')) | (Post.content.ilike(f'%{title}%'))
-        ).all()
-    return render_template('home.html', posts=posts)
+@app.route('/search')
+def search():
+    query = request.args.get('query')
+    page = request.args.get('page', 1, type=int)
+    posts = Post.query.join(User).filter(
+            or_(
+                Post.title.ilike(f'%{query}%'),
+                Post.content.ilike(f'%{query}%'),
+                User.username.ilike(f'%{query}%')
+            )
+        ).order_by(desc(Post.date_posted)).paginate(page=page, per_page=3)
+    return render_template('search_posts.html', posts=posts, query=query)
 
 
 @app.route('/post/<int:id>/update', methods=['GET', 'POST'])
@@ -108,6 +113,7 @@ def update_post(id):
         form.content.data = post.content
     return render_template('create_post.html', form=form, legend='Update Post')
 
+
 @app.route('/post/<int:id>/delete', methods=['GET'])
 @login_required
 def delete_post(id):
@@ -124,12 +130,23 @@ def delete_post(id):
     flash("Your Post has been deleted successfully...", "success")
     return redirect(url_for("account"))
 
+
 @app.route('/user_posts/<string:username>')
-@login_required
 def user_posts(username):
     user = User.query.filter_by(username=username).first()
     page = request.args.get('page', 1, type=int)
     posts = Post.query.filter_by(author=user).order_by(desc(Post.date_posted)).paginate(page=page, per_page=3)
-    if current_user == user:
-        return redirect(url_for('account'))
+    if current_user.is_authenticated:
+        if current_user == user:
+            return redirect(url_for('account'))
     return render_template('user_posts.html', user=user, posts=posts)
+
+
+@app.errorhandler(404)
+def error_404(error):
+    return render_template('404_error.html'), 404
+
+
+@app.errorhandler(500)
+def error_404(error):
+    return render_template('500_error.html'), 500

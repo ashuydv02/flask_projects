@@ -12,8 +12,8 @@
             <nav class="navbar mb-3" style="background-color: aliceblue;">
                 <div class="container-fluid">
                   <a class="navbar-brand" href="{{ url_for('home') }}">Blogs</a>
-                  <form method="get" action="{{url_for('post')}}" class="d-flex" role="search">
-                    <input class="form-control me-2" type="search" name="title" placeholder="Search" aria-label="Search" required>
+                  <form method="get" action="{{url_for('search')}}" class="d-flex" role="search">
+                    <input class="form-control me-2" type="search" name="query" placeholder="Search" aria-label="Search" required>
                     <button class="btn btn-outline-success" type="submit">Search</button>
                   </form>
                   {% if current_user.is_authenticated %}
