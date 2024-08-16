@@ -48,6 +48,7 @@ class UserSchema(ma.Schema):
 
 user_schema = UserSchema()
 users_schema = UserSchema(many=True)
+user_update_schema = UserSchema(only=('username', 'password', 'confirm_password'))
 post_schema = PostSchema()
 posts_schema = PostSchema(many=True)
 
@@ -119,3 +120,21 @@ def create_user():
     db.session.add(user)
     db.session.commit()
     return user_schema.dump(user), 201
+
+
+@app.route('/api/users/update/<id>/', methods=['PUT', 'PATCH'])
+def update_user(id):
+    json_data = request.get_json()
+    try:
+        data = user_update_schema.load(json_data)
+    except ValidationError as err:
+        return jsonify(err.messages), 400
+    user = User.query.get(id)
+    if user:
+        user.username = data['username']
+        hashed_password = bcrypt.generate_password_hash(data['password']).decode('utf-8')
+        user.password = hashed_password
+        db.session.commit()
+        return user_schema.dump(user), 201
+    return jsonify({"message": "No User found with this id..."})
+
