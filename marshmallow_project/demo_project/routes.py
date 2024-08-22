@@ -1,7 +1,9 @@
-from demo_project import app, db, ma, bcrypt
+from demo_project import app, db, ma, bcrypt, jwt
 from .models import Post, User
 from flask import request, jsonify
 from marshmallow import fields, ValidationError, validates, validates_schema, post_load
+from flask_jwt_extended import jwt_required, get_jwt_identity, create_access_token
+
 
 # Use of marshmallow without sqlalchemy integration
 # class PostSchema(ma.Schema):
@@ -71,6 +73,7 @@ def post_detail(id):
 
 
 @app.route('/api/posts/create/', methods=['POST'])
+@jwt_required()
 def create_post():
     json_data = request.get_json()
     try:
@@ -83,6 +86,7 @@ def create_post():
 
 
 @app.route('/api/posts/update/<int:id>/', methods=['PUT', 'PATCH'])
+@jwt_required()
 def update_post(id):
     post = Post.query.get(id)
     if post:
@@ -100,6 +104,7 @@ def update_post(id):
 
 
 @app.route('/api/posts/delete/<int:id>/', methods=['DELETE'])
+@jwt_required()
 def delete_post(id):
     post = Post.query.get(id)
     if post:
@@ -110,9 +115,11 @@ def delete_post(id):
 
 
 @app.route('/api/users/')
+@jwt_required()
 def users():
     all_users = User.query.all()
     return users_schema.dump(all_users)
+
 
 @app.route('/api/users/create/', methods=['POST'])
 def create_user():
@@ -131,6 +138,7 @@ def create_user():
 
 
 @app.route('/api/users/update/<id>/', methods=['PUT', 'PATCH'])
+@jwt_required()
 def update_user(id):
     data = request.get_json()
     username = request.json.get('username')
@@ -150,3 +158,19 @@ def update_user(id):
         return user_schema.dump(user), 201
     return jsonify({"message": "No User found with this id..."})
 
+
+# JWT Authentication
+@app.route('/api/login/', methods=['POST'])
+def login():
+    email = request.json.get('email')
+    password = request.json.get('password')
+
+    user = User.query.filter_by(email=email).first()
+    if user is not None:
+        if bcrypt.check_password_hash(user.password, password):
+            access_token = create_access_token(identity=email)
+            return jsonify(access_token=access_token), 200
+        else:
+            return jsonify({"Authentication Error": "Wrong password! please use correct password."}), 404
+    else:
+        return jsonify({"Authentication Error": "No user found with this email."}), 404
