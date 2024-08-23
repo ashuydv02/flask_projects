@@ -3,6 +3,7 @@ from .models import Post, User
 from flask import request, jsonify
 from marshmallow import fields, ValidationError, validates, validates_schema, post_load
 from flask_jwt_extended import jwt_required, get_jwt_identity, create_access_token
+from datetime import timedelta
 
 
 # Use of marshmallow without sqlalchemy integration
@@ -73,7 +74,7 @@ def post_detail(id):
 
 
 @app.route('/api/posts/create/', methods=['POST'])
-@jwt_required()
+@jwt_required(locations="cookies")
 def create_post():
     json_data = request.get_json()
     try:
@@ -86,7 +87,7 @@ def create_post():
 
 
 @app.route('/api/posts/update/<int:id>/', methods=['PUT', 'PATCH'])
-@jwt_required()
+@jwt_required(locations="cookies")
 def update_post(id):
     post = Post.query.get(id)
     if post:
@@ -104,7 +105,7 @@ def update_post(id):
 
 
 @app.route('/api/posts/delete/<int:id>/', methods=['DELETE'])
-@jwt_required()
+@jwt_required(locations="cookies")
 def delete_post(id):
     post = Post.query.get(id)
     if post:
@@ -115,7 +116,7 @@ def delete_post(id):
 
 
 @app.route('/api/users/')
-@jwt_required()
+@jwt_required(locations="cookies")
 def users():
     all_users = User.query.all()
     return users_schema.dump(all_users)
@@ -138,7 +139,7 @@ def create_user():
 
 
 @app.route('/api/users/update/<id>/', methods=['PUT', 'PATCH'])
-@jwt_required()
+@jwt_required(locations="cookies")
 def update_user(id):
     data = request.get_json()
     username = request.json.get('username')
@@ -168,9 +169,26 @@ def login():
     user = User.query.filter_by(email=email).first()
     if user is not None:
         if bcrypt.check_password_hash(user.password, password):
-            access_token = create_access_token(identity=email)
-            return jsonify(access_token=access_token), 200
+            access_token = create_access_token(identity=email, expires_delta=timedelta(minutes=1))
+            response = jsonify(access_token=access_token)
+            response.set_cookie(app.config['JWT_ACCESS_COOKIE_NAME'], access_token, httponly=True, secure=app.config['JWT_COOKIE_SECURE'])
+            return response, 200
         else:
             return jsonify({"Authentication Error": "Wrong password! please use correct password."}), 404
     else:
         return jsonify({"Authentication Error": "No user found with this email."}), 404
+
+
+@app.route('/api/users/identity/', methods=['GET'])
+@jwt_required(locations="cookies")
+def identity():
+    current_user = get_jwt_identity()
+    return jsonify(logged_in_as=current_user), 200
+
+
+@app.route('/api/logout/', methods=['GET'])
+@jwt_required(locations="cookies")
+def logout():
+    response = jsonify({"msg": "Your session has been terminated..."})
+    response.delete_cookie(app.config['JWT_ACCESS_COOKIE_NAME'])
+    return response, 200
